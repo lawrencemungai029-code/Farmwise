@@ -1,9 +1,13 @@
-import pandas as pd
+
+import sys
 import os
+import pandas as pd
+import joblib
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from scripts.preprocess import preprocess_data
 from scripts.train_model import train_and_evaluate
 from scripts.evaluate import sample_prediction
-import joblib
+
 
 DATA_PATH = os.path.join('data', 'merged_enhanced_behavioral.csv')
 MODELS_DIR = 'models'

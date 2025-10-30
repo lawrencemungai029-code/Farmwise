@@ -1,58 +1,58 @@
 LogisticRegression:
-  cv_f1_mean: 0.3067
-  cv_f1_std: 0.2175
-  train_acc: 1.0000
-  test_acc: 0.4000
-  precision: 0.4333
-  recall: 0.4000
-  f1: 0.4000
+  cv_f1_mean: 0.8997
+  cv_f1_std: 0.0054
+  train_acc: 0.9563
+  test_acc: 0.8800
+  precision: 0.8793
+  recall: 0.8800
+  f1: 0.8796
   classification_report:               precision    recall  f1-score   support
 
-           0       0.50      0.33      0.40         3
-           1       0.33      0.50      0.40         2
+           0       0.83      0.81      0.82        68
+           1       0.90      0.92      0.91       132
 
-    accuracy                           0.40         5
-   macro avg       0.42      0.42      0.40         5
-weighted avg       0.43      0.40      0.40         5
+    accuracy                           0.88       200
+   macro avg       0.87      0.86      0.87       200
+weighted avg       0.88      0.88      0.88       200
 
-  confusion_matrix: [[1, 2], [1, 1]]
+  confusion_matrix: [[55, 13], [11, 121]]
 
 RandomForest:
-  cv_f1_mean: 0.0733
-  cv_f1_std: 0.0904
+  cv_f1_mean: 0.8961
+  cv_f1_std: 0.0089
   train_acc: 1.0000
-  test_acc: 0.4000
-  precision: 0.3000
-  recall: 0.4000
-  f1: 0.3429
+  test_acc: 0.8900
+  precision: 0.8905
+  recall: 0.8900
+  f1: 0.8876
   classification_report:               precision    recall  f1-score   support
 
-           0       0.50      0.67      0.57         3
-           1       0.00      0.00      0.00         2
+           0       0.90      0.76      0.83        68
+           1       0.89      0.95      0.92       132
 
-    accuracy                           0.40         5
-   macro avg       0.25      0.33      0.29         5
-weighted avg       0.30      0.40      0.34         5
+    accuracy                           0.89       200
+   macro avg       0.89      0.86      0.87       200
+weighted avg       0.89      0.89      0.89       200
 
-  confusion_matrix: [[2, 1], [2, 0]]
+  confusion_matrix: [[52, 16], [6, 126]]
 
 XGBoost:
-  cv_f1_mean: 0.2133
-  cv_f1_std: 0.2903
+  cv_f1_mean: 0.9107
+  cv_f1_std: 0.0118
   train_acc: 1.0000
-  test_acc: 0.2000
-  precision: 0.2000
-  recall: 0.2000
-  f1: 0.2000
+  test_acc: 0.8900
+  precision: 0.8891
+  recall: 0.8900
+  f1: 0.8892
   classification_report:               precision    recall  f1-score   support
 
-           0       0.33      0.33      0.33         3
-           1       0.00      0.00      0.00         2
+           0       0.86      0.81      0.83        68
+           1       0.90      0.93      0.92       132
 
-    accuracy                           0.20         5
-   macro avg       0.17      0.17      0.17         5
-weighted avg       0.20      0.20      0.20         5
+    accuracy                           0.89       200
+   macro avg       0.88      0.87      0.88       200
+weighted avg       0.89      0.89      0.89       200
 
-  confusion_matrix: [[1, 2], [2, 0]]
+  confusion_matrix: [[55, 13], [9, 123]]
 
-Best model: LogisticRegression
+Best model: XGBoost

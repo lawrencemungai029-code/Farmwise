@@ -5,8 +5,7 @@ from scripts.train_model import train_and_evaluate
 from scripts.evaluate import sample_prediction
 import joblib
 
-# Paths
-DATA_PATH = os.path.join('data', 'farmers_data_with_target.csv')
+DATA_PATH = os.path.join('data', 'merged_enhanced_behavioral.csv')
 MODELS_DIR = 'models'
 RESULTS_DIR = 'results'
 

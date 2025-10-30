@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'credit_model.pkl')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'credit_model.pkl')
 STATIC_PLOTS = os.path.join(os.path.dirname(__file__), 'static', 'plots')
 
 app = Flask(__name__, static_folder='static')
@@ -26,8 +26,8 @@ def load_model():
 def preprocess_input(data):
     # Map frontend JSON to model input DataFrame
     features = [
-        'age', 'region', 'farm_size', 'loan_purpose', 'past_repayment_record',
-        'disability', 'group_membership', 'neighbor_performance_index'
+        'age', 'region', 'farm_size', 'loan_purpose',
+        'disability', 'group_membership'
     ]
     processed = {k: data.get(k, 0) for k in features}
     df = pd.DataFrame([processed])
@@ -46,14 +46,6 @@ def predict_score(model, input_df, raw_data):
     if raw_data.get('disability', 0) == 1:
         score = min(score + 0.05, 1.0)
         reasoning.append('Disability bias applied')
-    if 'neighbor_performance_index' in raw_data:
-        npi = float(raw_data['neighbor_performance_index'])
-        if npi > 0.7:
-            score = min(score + 0.03, 1.0)
-            reasoning.append('Good neighbor index')
-        elif npi < 0.3:
-            score = max(score - 0.03, 0.0)
-            reasoning.append('Poor neighbor index')
 
     # Eligibility
     eligibility = 'Approved' if score >= 0.5 else 'Rejected'

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
+router = APIRouter()
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend.models.farmer import Farmer
@@ -6,10 +8,80 @@ from pydantic import BaseModel
 from typing import Optional
 import pandas as pd
 import numpy as np
+
 import random
 import os
+import pickle
+# import shap
+# import matplotlib.pyplot as plt
+from utils.gpt_structuring import generate_explanation
 
-router = APIRouter()
+
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '../../models/credit_model.pkl')
+STATIC_PLOTS = os.path.join(os.path.dirname(__file__), '../static/plots')
+
+model = None
+def load_model():
+    global model
+    if model is None:
+        with open(MODEL_PATH, 'rb') as f:
+            model_loaded = pickle.load(f)
+        model = model_loaded
+    return model
+
+def preprocess_input(data):
+    features = [
+        'age', 'region', 'farm_size', 'loan_purpose',
+        'disability', 'group_membership'
+    ]
+    processed = {k: data.get(k, 0) for k in features}
+    df = pd.DataFrame([processed])
+    return df
+
+def predict_score(model, input_df, raw_data):
+    try:
+        score = float(model.predict_proba(input_df)[0][1])
+    except Exception as e:
+        raise RuntimeError(f"Prediction failed: {e}")
+
+    reasoning = []
+    if raw_data.get('disability', 0) == 1:
+        score = min(score + 0.05, 1.0)
+        reasoning.append('Disability bias applied')
+    eligibility = 'Approved' if score >= 0.5 else 'Rejected'
+    if raw_data.get('group_membership', 0) == 1:
+        recommended_limit = 300000
+        reasoning.append('Group loan eligibility')
+    else:
+        recommended_limit = 150000
+    # SHAP and plotting logic removed for minimal memory use
+    output = {
+        "farmer_name": raw_data.get("name", "Unknown"),
+        "credit_score": round(score, 4),
+        "eligibility": eligibility,
+        "reasoning": reasoning,
+        "recommended_limit": recommended_limit,
+        "plots": {}
+    }
+    return output
+
+def format_with_gpt(score_data):
+    return f"Farmer {score_data['farmer_name']} is {score_data['eligibility']} for a loan of up to {score_data['recommended_limit']}. Reasoning: {', '.join(score_data['reasoning'])}."
+
+# --- FastAPI /predict endpoint ---
+@router.post("/predict")
+async def predict(request: Request):
+    try:
+        data = await request.json()
+        if not data:
+            return JSONResponse({"error": "No input data provided"}, status_code=400)
+        mdl = load_model()
+        input_df = preprocess_input(data)
+        result = predict_score(mdl, input_df, data)
+        result["gpt_output"] = format_with_gpt(result)
+        return JSONResponse(result, status_code=200)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 # Load climate data once
 CLIMATE_PATH = os.path.join(os.path.dirname(__file__), '../../dataset/synthetic_climate_kenya.csv')
@@ -93,19 +165,34 @@ def score_farmer(data: FarmerRegister) -> dict:
         support = 'Data review and mentorship.'
     # What-if simulation
     predicted_yield_gain = data.loan_amount_requested * ((data.soil_quality_index or 0.7) + (data.past_crop_performance_index or 0.7)) / 2
-    # Explainability
-    explanation = f"Based on your {'consistent M-Pesa activity and ' if data.mpesa_monthly_transactions > 8 else ''}healthy soil quality, your farm shows good repayment potential. "
-    if risk == 'Medium':
-        explanation += "You could improve your loan class by diversifying crops or joining a cooperative. "
-    if explain_steps:
-        explanation += ' '.join(explain_steps)
-    explanation += f" Predicted yield gain if loan approved: {predicted_yield_gain:.2f} units."
+    # SHAP/feature influences (mocked for now)
+    shap_features = {
+        'repayment_history_score': 0.12,
+        'yield_per_acre': 0.10,
+        'disabled': 0.05
+    }
+    key_influences = ["Repayment history", "Yield consistency", "Soil quality"]
+    # Compose GPT payload
+    gpt_payload = {
+        "farmer_id": getattr(data, 'national_id', 'N/A'),
+        "score": round(avg_score, 2),
+        "probability": round(avg_score, 2),
+        "shap_features": shap_features,
+        "key_influences": key_influences,
+        "recommended_limit": 150000,
+        "loan_type": "individual",
+        "disabled_status": int(getattr(data, 'disabled', 0)) if hasattr(data, 'disabled') else 0,
+        "neighbor_performance": float(getattr(data, 'neighbour_performance_index', 0.7)) if hasattr(data, 'neighbour_performance_index') else 0.7
+    }
+    gpt_summary = generate_explanation(gpt_payload)
     return {
         'credit_score': round(avg_score, 2),
         'risk_category': risk,
         'support_message': support,
-        'explanation': explanation,
-        'predicted_yield_gain': round(predicted_yield_gain, 2)
+        'predicted_yield_gain': round(predicted_yield_gain, 2),
+        'explanation': gpt_summary.get('summary', ''),
+        'next_steps': gpt_summary.get('next_steps', []),
+        'features': shap_features
     }
 
 # Register endpoint

@@ -1,3 +1,4 @@
+
 import os
 import pickle
 import numpy as np
@@ -7,19 +8,27 @@ import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
+print("[DEBUG] Starting server.py...")
+
+
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'credit_model.pkl')
 STATIC_PLOTS = os.path.join(os.path.dirname(__file__), 'static', 'plots')
+print(f"[DEBUG] MODEL_PATH: {MODEL_PATH}")
+print(f"[DEBUG] STATIC_PLOTS: {STATIC_PLOTS}")
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
 # --- Model Loading ---
 def load_model():
+    print("[DEBUG] Loading model...")
     try:
         with open(MODEL_PATH, 'rb') as f:
             model = pickle.load(f)
+        print("[DEBUG] Model loaded successfully.")
         return model
     except Exception as e:
+        print(f"[ERROR] Model loading failed: {e}")
         raise RuntimeError(f"Model loading failed: {e}")
 
 # --- Preprocessing ---
@@ -130,5 +139,8 @@ def serve_plot(filename):
     return send_from_directory(STATIC_PLOTS, filename)
 
 if __name__ == '__main__':
+    print("[DEBUG] __main__ block starting...")
     os.makedirs(STATIC_PLOTS, exist_ok=True)
+    print("[DEBUG] STATIC_PLOTS directory ensured.")
     app.run(host='0.0.0.0', port=5000, debug=True)
+    print("[DEBUG] Flask app should be running.")

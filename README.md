@@ -7,7 +7,6 @@ Farmwise is a prototype machine learning pipeline and API for credit scoring of 
 - **Data Expansion & Preprocessing:** Synthetic dataset of 1000 farmers, with composite features for productivity, stability, and climate resilience.
 - **Model Training & Tuning:** Logistic Regression, Random Forest, and XGBoost models, with hyperparameter tuning via GridSearchCV.
 - **Fairness & Explainability:** Demographic parity checks, feature importance, and SHAP explainability (with workarounds for XGBoost/SHAP bugs).
-- **API Backend:** FastAPI service for real-time credit scoring predictions.
 - **Modular Pipeline:** Scripts for preprocessing, training, evaluation, fairness, feature importance, and optimization.
 
 ## Project Structure

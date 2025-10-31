@@ -14,7 +14,7 @@ import os
 import pickle
 # import shap
 # import matplotlib.pyplot as plt
-from utils.gpt_structuring import generate_explanation
+
 
 
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '../../models/credit_model.pkl')
@@ -121,14 +121,14 @@ def get_db():
     finally:
         db.close()
 
-# Helper: Credit scoring engine
 
+# Helper: Credit scoring engine
 def score_farmer(data: FarmerRegister) -> dict:
     scores = []
     explain_steps = []
     for _ in range(20):
         # Perturb inputs
-        perturbed = data.copy()
+        perturbed = data.copy(update={}) if hasattr(data, 'copy') else data
         perturbed.farm_size += random.uniform(-0.1, 0.1)
         perturbed.previous_yield = (perturbed.previous_yield or 1.0) * random.uniform(0.95, 1.05)
         perturbed.soil_quality_index = (perturbed.soil_quality_index or 0.7) * random.uniform(0.95, 1.05)
@@ -172,26 +172,24 @@ def score_farmer(data: FarmerRegister) -> dict:
         'disabled': 0.05
     }
     key_influences = ["Repayment history", "Yield consistency", "Soil quality"]
-    # Compose GPT payload
-    gpt_payload = {
-        "farmer_id": getattr(data, 'national_id', 'N/A'),
-        "score": round(avg_score, 2),
-        "probability": round(avg_score, 2),
-        "shap_features": shap_features,
-        "key_influences": key_influences,
-        "recommended_limit": 150000,
-        "loan_type": "individual",
-        "disabled_status": int(getattr(data, 'disabled', 0)) if hasattr(data, 'disabled') else 0,
-        "neighbor_performance": float(getattr(data, 'neighbour_performance_index', 0.7)) if hasattr(data, 'neighbour_performance_index') else 0.7
-    }
-    gpt_summary = generate_explanation(gpt_payload)
+    # Multiple summary templates
+    templates = [
+        f"Score: {round(avg_score,2)}. Risk: {risk}. Support: {support}",
+        f"The farmer's risk profile is {risk} with a score of {round(avg_score,2)}. Recommended support: {support}",
+        f"Assessment result: {risk} risk, score {round(avg_score,2)}. Next: {support}",
+        f"Credit score: {round(avg_score,2)}. Category: {risk}. Guidance: {support}",
+        f"{risk} risk detected (score: {round(avg_score,2)}). Action: {support}"
+    ]
+    import random
+    summary = random.choice(templates)
+    next_steps = ["Review data", "Monitor progress", "Provide mentorship"] if risk == 'High' else ["Continue support"]
     return {
         'credit_score': round(avg_score, 2),
         'risk_category': risk,
         'support_message': support,
         'predicted_yield_gain': round(predicted_yield_gain, 2),
-        'explanation': gpt_summary.get('summary', ''),
-        'next_steps': gpt_summary.get('next_steps', []),
+        'explanation': summary,
+        'next_steps': next_steps,
         'features': shap_features
     }
 

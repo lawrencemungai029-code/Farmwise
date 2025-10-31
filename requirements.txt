@@ -8,3 +8,5 @@ seaborn
 joblib
 fastapi
 uvicorn
+gunicorn
+sqlalchemy
